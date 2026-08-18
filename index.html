@@ -61,6 +61,14 @@
             font-size: 0.9em;
         }
 
+        .creator-tag {
+            font-size: 0.8em;
+            color: var(--accent-gold);
+            margin-top: 6px;
+            letter-spacing: 0.5px;
+            opacity: 0.9;
+        }
+
         #app-container {
             width: 100%;
             max-width: 500px;
@@ -372,7 +380,6 @@
             transition: all 0.2s ease;
         }
 
-        /* 🍺 술집 주인일 때의 특별 디자인 (술집주인 느낌 물씬 풍기도록 꾸밈) */
         .player-card-box.is-host {
             background: linear-gradient(135deg, #3d2212, #21140e);
             border: 2px solid var(--accent-gold);
@@ -416,7 +423,7 @@
             font-size: 1.1em;
             font-weight: bold;
             font-family: var(--font-clean);
-            width: 100px;
+            width: 85px;
             padding-bottom: 2px;
         }
         .player-name-input:focus {
@@ -439,7 +446,6 @@
             border: 1px solid rgba(255,255,255,0.1);
         }
 
-        /* 누적 점수 수정 가능 인풋박스 스타일 */
         .score-input {
             background: rgba(0, 0, 0, 0.5);
             border: 1px solid var(--accent-gold);
@@ -513,7 +519,23 @@
             border-color: #ffccd2;
         }
 
-        /* 술집 주인 전용 화려한 타이틀 배너 */
+        /* 개별 전사 삭제 버튼 스타일 */
+        .single-remove-btn {
+            background: rgba(168, 32, 26, 0.2);
+            border: 1px solid rgba(168, 32, 26, 0.6);
+            color: #ff8a80;
+            padding: 3px 6px;
+            border-radius: 6px;
+            font-size: 0.75em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .single-remove-btn:hover {
+            background: var(--accent-red);
+            color: #fff;
+        }
+
         .host-badge-banner {
             display: none;
             background: linear-gradient(135deg, #ffb300, #ff8f00);
@@ -617,7 +639,7 @@
             width: 100%;
         }
 
-        /* 새로 디자인된 맨 아래 실시간 순위표 (현상수배 전단지 스타일 업그레이드 버전) */
+        /* 실시간 순위표 */
         #ranking-board-panel {
             background: #e6d5b8;
             color: #2b1d0c;
@@ -721,12 +743,34 @@
             background: var(--panel-bg);
             border: 2px solid var(--accent-gold);
             border-radius: 20px;
-            padding: 30px 20px;
+            padding: 30px 20px 20px 20px;
             text-align: center;
             box-shadow: 0 10px 25px rgba(0,0,0,0.7);
             width: 100%;
             max-width: 380px;
+            position: relative;
         }
+
+        .modal-close-icon {
+            position: absolute;
+            top: 12px;
+            right: 15px;
+            background: transparent;
+            border: none;
+            color: var(--beer-foam);
+            font-size: 1.5em;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        .modal-close-icon:hover {
+            opacity: 1;
+            color: var(--text-highlight);
+        }
+
         .modal-content h2 {
             font-family: var(--font-vintage);
             color: var(--text-highlight);
@@ -756,6 +800,7 @@
     <header>
         <h1>배럴 다이스</h1>
         <p>북유럽 바이킹 장부</p>
+        <div class="creator-tag">제작자: 천상민</div>
     </header>
 
     <div id="app-container">
@@ -824,7 +869,6 @@
         <div class="section-header">
             <h3>바이킹 전사 명단</h3>
             <div class="player-actions">
-                <button class="action-btn" onclick="removePlayer()">- 전사 삭제</button>
                 <button class="action-btn" onclick="addPlayer()">+ 전사 추가</button>
             </div>
         </div>
@@ -842,7 +886,7 @@
             <button id="reset-btn" onclick="resetGame()">게임 전체 초기화</button>
         </section>
 
-        <!-- 맨 아래로 이동하고 디자인을 업그레이드한 실시간 순위표 섹션 -->
+        <!-- 실시간 순위표 -->
         <section id="ranking-board-panel">
             <div class="ranking-header">
                 <h3>👑 WANTED : 실시간 순위표</h3>
@@ -858,6 +902,7 @@
     <!-- 승리 팝업 모달 -->
     <section id="winner-modal">
         <div class="modal-content">
+            <button class="modal-close-icon" onclick="dismissWinnerModal()" title="닫기">&times;</button>
             <p>🍻 최고점 전사 탄생! 🍻</p>
             <h2 id="winner-name-display">플레이어</h2>
             <p id="winner-score-display">00점으로 승리했습니다!</p>
@@ -886,10 +931,13 @@
         function toggleCalculator() {
             const calc = document.getElementById('mini-calculator');
             const toggleBtn = document.querySelector('.calc-toggle-btn');
+            
             if (calc.style.display === 'block') {
                 calc.style.display = 'none';
                 toggleBtn.innerText = '🧮 계산기 열기';
             } else {
+                // 열 때마다 계산기 입력 내용 초기화 (0으로 리셋)
+                calcClear();
                 calc.style.display = 'block';
                 toggleBtn.innerText = '🧮 계산기 닫기';
             }
@@ -993,12 +1041,13 @@
             renderPlayers();
         }
 
-        function removePlayer() {
+        // 개별 전사 삭제 함수
+        function removePlayerById(id) {
             if (players.length <= 1) {
                 alert("최소 1명의 전사는 있어야 합니다!");
                 return;
             }
-            players.pop();
+            players = players.filter(p => p.id !== id);
             renderPlayers();
         }
 
@@ -1010,7 +1059,6 @@
             }
         }
 
-        // 누적 점수 직접 수정 기능
         function updatePlayerScore(id, newScoreVal) {
             const player = players.find(p => p.id === id);
             if (player) {
@@ -1096,6 +1144,7 @@
                     <div style="display: flex; gap: 6px; align-items: center;">
                         <span class="rank-badge" style="background:var(--accent-gold); color:var(--bg-wood); padding:2px 7px; border-radius:6px; font-weight:bold; font-size:0.8em;">${rank}위</span>
                         <input type="text" class="player-name-input" value="${player.name}" oninput="updatePlayerName(${player.id}, this.value)">
+                        <button class="single-remove-btn" onclick="removePlayerById(${player.id})" title="전사 삭제">삭제</button>
                     </div>
                     <div style="display: flex; gap: 6px; align-items: center;">
                         <div class="host-control-group">
@@ -1146,7 +1195,6 @@
             });
         }
 
-        // 실시간 순위표 렌더링 함수
         function renderRankingBoard() {
             const rankingContainer = document.getElementById('ranking-list-container');
             rankingContainer.innerHTML = '';
@@ -1178,7 +1226,6 @@
             let activePlayers = players.filter(p => !p.isHost);
             let hostPlayer = players.find(p => p.isHost);
 
-            // 라운드 시작 전 점수 백업용
             let previousScores = {};
             players.forEach(p => {
                 previousScores[p.id] = p.totalScore;
@@ -1200,9 +1247,6 @@
                 activePlayers.forEach(p => {
                     p.totalScore += p.currentOrder;
                 });
-                if (hostPlayer) {
-                    // 주인은 0점 획득 (변동 없음)
-                }
                 message = `🚨 술집 주인(${hostPlayer.name}) 제조 실패! 주인은 0점, 모든 플레이어가 자신이 등록한 점수를 획득합니다.`;
             } 
             else if (totalOrdered <= preparedBeer) {
@@ -1240,7 +1284,6 @@
                 message = `초과 패널티! 총 주문(${totalOrdered}잔) > 맥주(${preparedBeer}잔). 최고 주문자 패널티 및 최저 주문자 보상 적용!`;
             }
 
-            // 각 플레이어별 이번 턴에 얻은 점수 계산 및 갱신
             players.forEach(p => {
                 p.lastGainedScore = p.totalScore - previousScores[p.id];
             });
@@ -1275,6 +1318,10 @@
         function closeWinnerModal() {
             document.getElementById('winner-modal').style.display = 'none';
             resetGame();
+        }
+
+        function dismissWinnerModal() {
+            document.getElementById('winner-modal').style.display = 'none';
         }
 
         function resetGame() {
