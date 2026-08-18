@@ -317,85 +317,6 @@
             opacity: 0.85;
         }
 
-        /* 새로 추가된 실시간 순위표(현상수배 전단지 스타일) */
-        #ranking-board-panel {
-            background: #e6d5b8;
-            color: #2b1d0c;
-            border-radius: 12px;
-            padding: 15px;
-            border: 3px double #5c3a21;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.6);
-            background-image: radial-gradient(circle, #f4e8d1 0%, #d8c29d 100%);
-        }
-
-        .ranking-header {
-            text-align: center;
-            border-bottom: 2px dashed #5c3a21;
-            padding-bottom: 8px;
-            margin-bottom: 12px;
-        }
-
-        .ranking-header h3 {
-            margin: 0;
-            font-family: var(--font-vintage);
-            font-size: 1.3em;
-            color: #78281f;
-            letter-spacing: 2px;
-        }
-
-        .ranking-header p {
-            margin: 2px 0 0;
-            font-size: 0.75em;
-            font-style: italic;
-            color: #5c3a21;
-        }
-
-        .ranking-list {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .ranking-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.5);
-            padding: 8px 12px;
-            border-radius: 8px;
-            border: 1px solid #c8b088;
-            font-weight: bold;
-        }
-
-        .ranking-item.top-rank {
-            background: rgba(212, 175, 55, 0.25);
-            border-color: var(--accent-gold);
-        }
-
-        .ranking-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .rank-number {
-            font-size: 1.1em;
-            color: #78281f;
-            width: 25px;
-        }
-
-        .ranking-name {
-            font-size: 1.05em;
-        }
-
-        .ranking-score {
-            font-size: 1.1em;
-            color: #140d0a;
-            background: rgba(0,0,0,0.08);
-            padding: 2px 8px;
-            border-radius: 6px;
-        }
-
         /* 2. 플레이어 관리 헤더 바 */
         .section-header {
             display: flex;
@@ -451,10 +372,11 @@
             transition: all 0.2s ease;
         }
 
+        /* 🍺 술집 주인일 때의 특별 디자인 (술집주인 느낌 물씬 풍기도록 꾸밈) */
         .player-card-box.is-host {
-            background: #23130c;
-            border-color: var(--accent-gold);
-            box-shadow: 0 0 10px rgba(255, 179, 0, 0.25);
+            background: linear-gradient(135deg, #3d2212, #21140e);
+            border: 2px solid var(--accent-gold);
+            box-shadow: 0 0 15px rgba(255, 179, 0, 0.4), inset 0 0 10px rgba(255, 160, 0, 0.2);
         }
 
         .player-card-box.host-failed {
@@ -517,6 +439,23 @@
             border: 1px solid rgba(255,255,255,0.1);
         }
 
+        /* 누적 점수 수정 가능 인풋박스 스타일 */
+        .score-input {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--accent-gold);
+            color: var(--text-highlight);
+            font-size: 1.05em;
+            font-weight: bold;
+            width: 48px;
+            text-align: center;
+            border-radius: 4px;
+            padding: 1px 2px;
+        }
+        .score-input:focus {
+            outline: none;
+            background: #000;
+        }
+
         .host-control-group {
             display: flex;
             gap: 4px;
@@ -527,14 +466,22 @@
             display: flex;
             align-items: center;
             gap: 3px;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 179, 0, 0.4);
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 179, 0, 0.5);
             padding: 3px 6px;
             border-radius: 8px;
             font-size: 0.78em;
             cursor: pointer;
             user-select: none;
         }
+        .player-card-box.is-host .host-checkbox-label {
+            background: var(--accent-gold);
+            border-color: #fff;
+        }
+        .player-card-box.is-host .host-checkbox-label span {
+            color: var(--bg-wood);
+        }
+
         .host-checkbox-label input {
             accent-color: var(--accent-gold);
             cursor: pointer;
@@ -566,18 +513,21 @@
             border-color: #ffccd2;
         }
 
+        /* 술집 주인 전용 화려한 타이틀 배너 */
         .host-badge-banner {
             display: none;
             background: linear-gradient(135deg, #ffb300, #ff8f00);
             color: #1e120b;
             font-weight: bold;
-            font-size: 0.8em;
-            padding: 4px 10px;
+            font-size: 0.82em;
+            padding: 5px 10px;
             border-radius: 6px;
             text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+            font-family: var(--font-vintage);
+            letter-spacing: 1px;
+            border: 1px solid #ffe082;
         }
-
         .player-card-box.is-host .host-badge-banner {
             display: block;
         }
@@ -667,6 +617,91 @@
             width: 100%;
         }
 
+        /* 새로 디자인된 맨 아래 실시간 순위표 (현상수배 전단지 스타일 업그레이드 버전) */
+        #ranking-board-panel {
+            background: #e6d5b8;
+            color: #2b1d0c;
+            border-radius: 14px;
+            padding: 16px;
+            border: 3px double #5c3a21;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.7);
+            background-image: radial-gradient(circle, #fcf6ed 0%, #d4bda0 100%);
+            margin-top: 10px;
+        }
+
+        .ranking-header {
+            text-align: center;
+            border-bottom: 2px dashed #5c3a21;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+        }
+
+        .ranking-header h3 {
+            margin: 0;
+            font-family: var(--font-vintage);
+            font-size: 1.4em;
+            color: #78281f;
+            letter-spacing: 2px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .ranking-header p {
+            margin: 3px 0 0;
+            font-size: 0.8em;
+            font-style: italic;
+            color: #5c3a21;
+        }
+
+        .ranking-list {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .ranking-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.65);
+            padding: 9px 14px;
+            border-radius: 8px;
+            border: 1px solid #c8b088;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .ranking-item.top-rank {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.4), rgba(212, 175, 55, 0.2));
+            border: 2px solid var(--accent-gold);
+            transform: scale(1.01);
+        }
+
+        .ranking-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .rank-number {
+            font-size: 1.1em;
+            color: #78281f;
+            width: 35px;
+        }
+
+        .ranking-name {
+            font-size: 1.1em;
+            color: #21140e;
+        }
+
+        .ranking-score {
+            font-size: 1.15em;
+            color: #78281f;
+            background: rgba(120, 40, 31, 0.08);
+            padding: 3px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(120, 40, 31, 0.2);
+        }
+
         /* 승리 팝업 모달 */
         #winner-modal {
             display: none;
@@ -702,7 +737,7 @@
             font-size: 1.2em;
             margin: 0 0 20px 0;
             color: var(--beer-foam);
-        } 명
+        }
         .close-modal {
             background: var(--accent-gold);
             color: var(--bg-wood);
@@ -772,7 +807,7 @@
                     </div>
                 </div>
 
-                <button class="beer-adj-btn" onclick="adjustPreparedBeer(1)">+</button> 명
+                <button class="beer-adj-btn" onclick="adjustPreparedBeer(1)">+</button>
             </div>
 
             <button class="beer-reset-bar-btn" onclick="resetPreparedBeer()">
@@ -782,17 +817,6 @@
             <div id="round-result-text">
                 <h2>이번 라운드 준비된 맥주</h2>
                 <p id="result-message">플레이어별 주문 카드를 선택하세요 (최대 2장).</p>
-            </div>
-        </section>
-
-        <!-- 실시간 순위표 섹션 (현상수배 전단지 콘셉트) -->
-        <section id="ranking-board-panel">
-            <div class="ranking-header">
-                <h3>WANTED : 실시간 순위표</h3>
-                <p>명예의 전당 전사 현황</p>
-            </div>
-            <div class="ranking-list" id="ranking-list-container">
-                <!-- 동적 생성 -->
             </div>
         </section>
 
@@ -818,6 +842,17 @@
             <button id="reset-btn" onclick="resetGame()">게임 전체 초기화</button>
         </section>
 
+        <!-- 맨 아래로 이동하고 디자인을 업그레이드한 실시간 순위표 섹션 -->
+        <section id="ranking-board-panel">
+            <div class="ranking-header">
+                <h3>👑 WANTED : 실시간 순위표</h3>
+                <p>명예의 전당 전사 현황</p>
+            </div>
+            <div class="ranking-list" id="ranking-list-container">
+                <!-- 동적 생성 -->
+            </div>
+        </section>
+
     </div>
 
     <!-- 승리 팝업 모달 -->
@@ -833,9 +868,9 @@
     <script>
         let preparedBeer = 0;
         let players = [
-            { id: 1, name: "전사1", totalScore: 0, selectedCards: [], isHost: false, isHostFailed: false },
-            { id: 2, name: "전사2", totalScore: 0, selectedCards: [], isHost: false, isHostFailed: false },
-            { id: 3, name: "잔시3", totalScore: 0, selectedCards: [], isHost: false, isHostFailed: false }
+            { id: 1, name: "전사1", totalScore: 0, lastGainedScore: 0, selectedCards: [], isHost: false, isHostFailed: false },
+            { id: 2, name: "전사2", totalScore: 0, lastGainedScore: 0, selectedCards: [], isHost: false, isHostFailed: false },
+            { id: 3, name: "전사3", totalScore: 0, lastGainedScore: 0, selectedCards: [], isHost: false, isHostFailed: false }
         ];
 
         let nextPlayerId = 4;
@@ -950,6 +985,7 @@
                 id: nextPlayerId++,
                 name: `전사 ${players.length + 1}`,
                 totalScore: 0,
+                lastGainedScore: 0,
                 selectedCards: [],
                 isHost: false,
                 isHostFailed: false
@@ -970,7 +1006,17 @@
             const player = players.find(p => p.id === id);
             if (player) {
                 player.name = newName;
-                renderRankingBoard(); // 이름 변경 시 실시간 반영
+                renderRankingBoard();
+            }
+        }
+
+        // 누적 점수 직접 수정 기능
+        function updatePlayerScore(id, newScoreVal) {
+            const player = players.find(p => p.id === id);
+            if (player) {
+                let parsed = parseInt(newScoreVal, 10);
+                player.totalScore = isNaN(parsed) ? 0 : parsed;
+                renderRankingBoard();
             }
         }
 
@@ -1017,7 +1063,7 @@
         }
 
         function renderPlayers() {
-            renderRankingBoard(); // 순위표 갱신 함께 호출
+            renderRankingBoard();
 
             let sortedIndices = players.map((p, idx) => idx).sort((a, b) => {
                 return players[b].totalScore - players[a].totalScore;
@@ -1062,7 +1108,8 @@
                             </label>
                         </div>
                         <div class="player-stats">
-                            <span class="stat-pill" title="누적 점수">누적: <strong style="color:var(--accent-gold); font-size:1.05em;">${player.totalScore}</strong></span>
+                            <span class="stat-pill" title="직전 턴 획득 점수">전턴: <strong style="color:${player.lastGainedScore >= 0 ? '#66bb6a' : '#ef5350'};">${player.lastGainedScore > 0 ? '+' + player.lastGainedScore : player.lastGainedScore}</strong></span>
+                            <span class="stat-pill" title="누적 점수 수정 가능">누적: <input type="number" class="score-input" value="${player.totalScore}" onchange="updatePlayerScore(${player.id}, this.value)"></span>
                         </div>
                     </div>
                 `;
@@ -1075,7 +1122,7 @@
 
                 let badgeBanner = document.createElement('div');
                 badgeBanner.className = 'host-badge-banner';
-                badgeBanner.innerText = '🏠 [이번 턴 술집 주인] 남은 잔 점수 획득';
+                badgeBanner.innerText = '🍻 [현재 술집 주인] 탭에서 주인의 위엄을 뽐내는 중!';
                 cardBox.appendChild(badgeBanner);
 
                 let cardPickerWrapper = document.createElement('div');
@@ -1104,7 +1151,6 @@
             const rankingContainer = document.getElementById('ranking-list-container');
             rankingContainer.innerHTML = '';
 
-            // 점수 기준 내림차순 정렬 복사본 생성
             let sortedPlayers = [...players].sort((a, b) => b.totalScore - a.totalScore);
 
             sortedPlayers.forEach((player, index) => {
@@ -1120,7 +1166,7 @@
                 rankItem.innerHTML = `
                     <div class="ranking-left">
                         <span class="rank-number">${medalIcon}${rank}위</span>
-                        <span class="ranking-name">${player.name}</span>
+                        <span class="ranking-name">${player.name} ${player.isHost ? '🍺(주인)' : ''}</span>
                     </div>
                     <div class="ranking-score">${player.totalScore}점</div>
                 `;
@@ -1131,6 +1177,12 @@
         function calculateRound() {
             let activePlayers = players.filter(p => !p.isHost);
             let hostPlayer = players.find(p => p.isHost);
+
+            // 라운드 시작 전 점수 백업용
+            let previousScores = {};
+            players.forEach(p => {
+                previousScores[p.id] = p.totalScore;
+            });
 
             activePlayers.forEach(p => {
                 p.currentOrder = p.selectedCards.reduce((sum, num) => sum + num, 0);
@@ -1148,6 +1200,9 @@
                 activePlayers.forEach(p => {
                     p.totalScore += p.currentOrder;
                 });
+                if (hostPlayer) {
+                    // 주인은 0점 획득 (변동 없음)
+                }
                 message = `🚨 술집 주인(${hostPlayer.name}) 제조 실패! 주인은 0점, 모든 플레이어가 자신이 등록한 점수를 획득합니다.`;
             } 
             else if (totalOrdered <= preparedBeer) {
@@ -1185,6 +1240,11 @@
                 message = `초과 패널티! 총 주문(${totalOrdered}잔) > 맥주(${preparedBeer}잔). 최고 주문자 패널티 및 최저 주문자 보상 적용!`;
             }
 
+            // 각 플레이어별 이번 턴에 얻은 점수 계산 및 갱신
+            players.forEach(p => {
+                p.lastGainedScore = p.totalScore - previousScores[p.id];
+            });
+
             document.getElementById('result-message').innerText = message;
             
             preparedBeer = 0;
@@ -1221,6 +1281,7 @@
             preparedBeer = 0;
             players.forEach(p => {
                 p.totalScore = 0;
+                p.lastGainedScore = 0;
                 p.selectedCards.splice(0, p.selectedCards.length);
                 p.isHost = false;
                 p.isHostFailed = false;
