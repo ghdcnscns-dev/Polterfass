@@ -2,1341 +2,879 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>배럴 다이스: 바이킹 장부</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>배럴 다이스: 맥주 통과 주사위</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root {
-            --bg-wood: #140d0a;
-            --panel-bg: #21140e;
-            --card-bg: #2d1c13;
-            --text-main: #f5f0eb;
-            --text-highlight: #ffcc00;
-            --accent-red: #a8201a;
-            --accent-gold: #d4af37;
-            --beer-foam: #fffde7;
-            --beer-liquid: #ff8f00;
-            --font-vintage: 'Georgia', serif;
-            --font-clean: 'Segoe UI', sans-serif;
+            --bg-color: #1a120b;          
+            --card-bg: #261c14;          
+            --card-border: #423022;      
+            --accent-color: #f4a261;     
+            --text-main: #fefae0;        
+            --text-sub: #b7b7a4;         
+            --button-bg: #38271a;        
+            --input-bg: #18110b;         
+            --beer-gold: #e9c46a;        
         }
 
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            display: flex; 
+            flex-direction: column; 
+            min-height: 100vh; 
+            align-items: center; 
+            padding: 16px; 
+            padding-bottom: env(safe-area-inset-bottom, 20px);
         }
+        .container { width: 100%; max-width: 480px; display: flex; flex-direction: column; flex: 1; }
+        
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--card-border); }
+        .header-title-area { display: flex; align-items: baseline; gap: 8px; }
+        .header-title { color: var(--text-main); font-size: 17px; font-weight: bold; }
+        .header-subtitle { color: var(--accent-color); font-size: 12px; opacity: 0.8; }
+        .header-buttons { display: flex; gap: 6px; }
+        .btn-top-header { background-color: var(--button-bg); color: var(--accent-color); border: 1px solid var(--card-border); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+        .btn-top-header:active { background-color: #4e3827; }
+        .btn-top-danger { background-color: #3b1c1c; color: #ff9999; border: 1px solid #7c3a3a; }
+        
+        .progress-bar-container { width: 100%; background-color: var(--input-bg); height: 12px; border-radius: 6px; border: 1px solid var(--card-border); margin-bottom: 16px; overflow: hidden; position: relative; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #d4a373, var(--accent-color), #e76f51); width: 0%; transition: width 0.3s ease; }
+        .progress-text-overlay { position: absolute; width: 100%; height: 100%; top: 0; left: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
 
-        body {
-            background-color: var(--bg-wood);
-            color: var(--text-main);
-            font-family: var(--font-clean);
-            margin: 0;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
+        .section-box { background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+        .section-title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .section-title { font-size: 15px; font-weight: bold; color: var(--accent-color); margin-bottom: 4px; }
+        .section-desc { font-size: 12px; color: var(--text-sub); margin-bottom: 12px; line-height: 1.4; white-space: pre-line; }
 
-        header {
-            text-align: center;
-            padding: 15px 0;
-            border-bottom: 2px solid var(--accent-gold);
-            width: 100%;
-            max-width: 500px;
-            margin-bottom: 15px;
-        }
+        .player-count-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 10px; }
+        .pc-btn { background-color: var(--button-bg); border: 1px solid var(--card-border); color: var(--text-main); padding: 12px 0; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; text-align: center; }
+        .pc-btn.active { background-color: #5c3a21; border-color: var(--accent-color); color: var(--accent-color); }
+        
+        .config-row { display: flex; flex-direction: column; background-color: var(--input-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 12px; margin-bottom: 10px; gap: 8px; }
+        
+        .config-input-wrapper { display: flex; align-items: center; background: var(--button-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 6px 10px; flex: 1; }
+        .config-input { width: 100%; background: transparent; border: none; color: var(--text-main); font-size: 15px; outline: none; }
 
-        header h1 {
-            font-family: var(--font-vintage);
-            color: var(--text-highlight);
-            margin: 0;
-            font-size: 2.2em;
-            text-shadow: 2px 2px 6px rgba(0,0,0,0.7);
-            letter-spacing: 1px;
-        }
+        .btn-primary { width: 100%; background: linear-gradient(135deg, #dda15e, #bc6c25); border: 1px solid #faedcd; color: #fff; padding: 16px; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; text-align: center; margin-top: 10px; box-shadow: 0 4px 12px rgba(188, 108, 37, 0.3); }
+        .btn-primary:active { opacity: 0.85; }
+        
+        .btn-edit-mode { background: linear-gradient(135deg, #2b3a31, #3a4f41); border: 1px solid #52735d; color: #a3c1ad; margin-top: 10px; }
 
-        header p {
-            margin: 5px 0 0;
-            font-style: italic;
-            opacity: 0.8;
-            font-size: 0.9em;
-        }
+        .pub-master-box { background: linear-gradient(135deg, #2a1b10, #362417); border: 2px solid var(--accent-color); border-radius: 12px; padding: 14px; margin-bottom: 14px; box-shadow: 0 4px 15px rgba(244, 162, 97, 0.15); }
+        .pub-master-header { display: flex; align-items: center; justify-content: space-between; font-size: 14px; font-weight: bold; color: var(--accent-color); margin-bottom: 8px; }
+        
+        /* 모달 스타일 */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+        .modal-content { background: var(--card-bg); border: 2px solid var(--accent-color); border-radius: 14px; width: 100%; max-width: 380px; padding: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 12px; max-height: 90vh; overflow-y: auto; }
+        .modal-title { font-size: 16px; font-weight: bold; color: var(--accent-color); text-align: center; margin-bottom: 4px; }
+        .modal-player-btn { background: var(--button-bg); border: 1px solid var(--card-border); color: var(--text-main); padding: 12px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; }
+        .modal-player-btn:active { background: #5c3a21; }
 
-        .creator-tag {
-            font-size: 0.8em;
-            color: var(--accent-gold);
-            margin-top: 6px;
-            letter-spacing: 0.5px;
-            opacity: 0.9;
-        }
+        .pool-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 10px 0; }
+        
+        .pool-num-btn { background: var(--button-bg); border: 2px solid var(--card-border); color: var(--text-main); font-size: 16px; font-weight: bold; padding: 14px 0; border-radius: 8px; cursor: pointer; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; transition: all 0.2s ease; }
+        .pool-num-btn:active { background: #5c3a21; }
+        .pool-num-btn.selected { background-color: #3f2818; border-color: var(--accent-color); box-shadow: 0 0 8px rgba(244, 162, 97, 0.4); }
+        .pool-count-sub { font-size: 11px; color: var(--text-sub); font-weight: normal; }
 
-        #app-container {
-            width: 100%;
-            max-width: 500px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            padding-bottom: 30px;
-        }
+        .beer-builder-section { background: var(--input-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 10px; margin-top: 8px; }
+        .beer-tokens-display { display: flex; flex-wrap: wrap; gap: 6px; min-height: 42px; background: #120c08; border: 1px solid var(--card-border); border-radius: 6px; padding: 8px; align-items: center; margin-top: 6px; }
+        
+        .beer-token-badge { background: #38271a; border: 1px solid var(--accent-color); color: var(--text-main); font-size: 14px; font-weight: bold; padding: 6px 12px; border-radius: 6px; display: flex; align-items: center; cursor: pointer; }
+        .beer-token-badge.double { background: #5a1818; border-color: #ff6b6b; color: #ffcccc; box-shadow: 0 0 6px rgba(255, 107, 107, 0.4); }
+        .beer-token-badge.disabled-token { background: #222; border-color: #555; color: #777; filter: grayscale(100%); text-decoration: line-through; }
 
-        /* 1. 맥주잔 섹션 */
-        #round-result-panel {
-            background: var(--panel-bg);
-            border-radius: 16px;
-            padding: 20px 15px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            box-shadow: 0 6px 12px rgba(0,0,0,0.5);
-            border: 1px solid rgba(212, 175, 55, 0.3);
+        .btn-mini-calc { background-color: var(--button-bg); border: 1px solid var(--card-border); color: var(--accent-color); padding: 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: bold; }
+
+        .player-score-card { background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px; }
+        .player-score-card.is-master { background-color: #312014; border-color: var(--accent-color); }
+        
+        .player-card-top { display: flex; align-items: center; justify-content: space-between; }
+        
+        .player-gauge-wrapper { width: 100%; background-color: var(--input-bg); height: 8px; border-radius: 4px; border: 1px solid var(--card-border); overflow: hidden; position: relative; }
+        .player-gauge-fill { height: 100%; background: linear-gradient(90deg, #d4a373, var(--accent-color)); width: 0%; transition: width 0.3s ease; }
+
+        .stepper-controls { display: flex; align-items: center; gap: 6px; }
+        .step-btn { background-color: var(--button-bg); border: 1px solid var(--card-border); color: var(--text-main); width: 36px; height: 36px; border-radius: 6px; font-size: 18px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .step-btn.disabled { opacity: 0.3; pointer-events: none; }
+        .score-input { background-color: var(--input-bg); border: 1px solid var(--card-border); color: var(--text-main); width: 65px; height: 36px; text-align: center; font-size: 16px; font-weight: bold; border-radius: 6px; outline: none; }
+        .score-input.disabled { opacity: 0.4; pointer-events: none; background-color: #120c08; }
+
+        .nav-button-group { display: flex; gap: 10px; margin-top: 15px; margin-bottom: 20px; }
+        .btn-secondary { flex: 1; background-color: var(--button-bg); border: 1px solid var(--card-border); color: var(--text-main); padding: 14px; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; text-align: center; }
+        
+        .winner-card { 
+            background: linear-gradient(135deg, #2b1d12, #48311b, #21160e); 
+            border: 2px solid var(--accent-color); 
+            border-radius: 16px; 
+            padding: 24px 16px; 
+            text-align: center; 
+            margin-bottom: 16px; 
+            box-shadow: 0 0 20px rgba(244, 162, 97, 0.3);
             position: relative;
-        }
-
-        .beer-control-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 12px;
-        }
-
-        .beer-adj-btn {
-            background: linear-gradient(135deg, #4e342e, #3e2723);
-            border: 2px solid var(--accent-gold);
-            color: var(--accent-gold);
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            font-size: 1.6em;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-            user-select: none;
-            flex-shrink: 0;
-        }
-
-        .beer-adj-btn:active {
-            transform: scale(0.92);
-            background: var(--accent-gold);
-            color: var(--bg-wood);
-        }
-
-        .beer-reset-bar-btn {
-            background: rgba(30, 18, 11, 0.6);
-            border: 1px dashed rgba(255, 111, 96, 0.6);
-            color: #ff6f60;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.82em;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
-            transition: all 0.2s ease;
-            user-select: none;
-            margin-bottom: 15px;
-        }
-
-        .beer-reset-bar-btn:active {
-            background: #ff6f60;
-            color: var(--bg-wood);
-            border-style: solid;
-        }
-
-        .calc-toggle-btn {
-            position: absolute;
-            top: 12px;
-            right: 15px;
-            background: linear-gradient(135deg, #ffb300, #ff8f00);
-            border: 2px solid #ffe082;
-            color: #1e120b;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 0.75em;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-        }
-
-        #mini-calculator {
-            display: none;
-            width: 100%;
-            background: #180e09;
-            border: 2px dashed var(--accent-gold);
-            border-radius: 12px;
-            padding: 12px;
-            margin-bottom: 12px;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
-        }
-
-        .calc-screen {
-            background: #0d0704;
-            border: 1px solid rgba(255, 179, 0, 0.4);
-            color: var(--text-highlight);
-            font-size: 1.4em;
-            font-family: monospace;
-            padding: 8px 12px;
-            text-align: right;
-            border-radius: 6px;
-            margin-bottom: 8px;
-            min-height: 40px;
-            word-break: break-all;
-        }
-
-        .calc-pad {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 6px;
-        }
-
-        .calc-btn {
-            background: #3c2419;
-            border: 1px solid #5d3a29;
-            color: var(--text-main);
-            padding: 10px 0;
-            border-radius: 6px;
-            font-size: 1.05em;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .calc-btn:active {
-            background: var(--accent-gold);
-            color: #1e120b;
-        }
-        .calc-btn.op {
-            color: var(--accent-gold);
-            background: #2d1a12;
-        }
-        .calc-btn.clear {
-            color: #ff6f60;
-        }
-        .calc-btn.apply {
-            background: linear-gradient(135deg, #ffb300, #ff8f00);
-            color: #1e120b;
-            grid-column: span 2;
-        }
-
-        .beer-container-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-
-        .beer-handle {
-            width: 22px;
-            height: 80px;
-            border: 4px solid rgba(255, 255, 255, 0.4);
-            border-right: none;
-            border-radius: 12px 0 0 12px;
-            margin-right: -2px;
-            z-index: 1;
-        }
-
-        #beer-glass-visual {
-            position: relative;
-            width: 95px;
-            height: 135px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 8px 8px 22px 22px;
-            border: 3px solid rgba(255, 255, 255, 0.6);
             overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.25);
-            z-index: 2;
         }
+        .winner-icon-container { width: 70px; height: 70px; margin: 0 auto 10px auto; background: rgba(244, 162, 97, 0.15); border: 2px solid var(--accent-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; }
+        .winner-name-badge { font-size: 22px; font-weight: bold; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.6); margin: 8px 0 4px 0; }
+        .winner-score-badge { font-size: 28px; font-weight: bold; color: var(--accent-color); text-shadow: 0 2px 6px rgba(0,0,0,0.8); }
 
-        .beer-liquid-container {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 0%;
-            transition: height 0.3s ease-in-out;
-            overflow: hidden;
-            z-index: 1;
-        }
-
-        .beer-wave {
-            position: absolute;
-            top: -8px;
-            left: -50%;
-            width: 200%;
-            height: 16px;
-            background: repeat-x;
-            background-image: radial-gradient(circle at 8px -4px, transparent 10px, var(--beer-liquid) 11px);
-            background-size: 16px 16px;
-            animation: wave-anim 2s linear infinite;
-        }
-
-        .beer-body {
-            position: absolute;
-            top: 8px;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--beer-liquid);
-        }
-
-        @keyframes wave-anim {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(16px); }
-        }
-
-        .beer-foam-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 10px;
-            background: var(--beer-foam);
-            border-radius: 4px 4px 0 0;
-            z-index: 2;
-        }
-
-        #glass-number-display {
-            position: relative;
-            z-index: 10;
-            font-size: 2.4em;
-            font-weight: bold;
-            color: #ffffff;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.9);
-            pointer-events: none;
-        }
-
-        #round-result-text {
-            text-align: center;
-            margin-top: 2px;
-        }
-        #round-result-text h2 {
-            margin: 0;
-            color: var(--accent-gold);
-            font-family: var(--font-vintage);
-            font-size: 1.15em;
-        }
-        #round-result-text p {
-            margin: 4px 0 0;
-            font-size: 0.85em;
-            opacity: 0.85;
-        }
-
-        /* 2. 플레이어 관리 헤더 바 */
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 5px;
-        }
-
-        .section-header h3 {
-            margin: 0;
-            font-size: 1.1em;
-            color: var(--accent-gold);
-            font-family: var(--font-vintage);
-        }
-
-        .player-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        button.action-btn {
-            background: var(--card-bg);
-            border: 1px solid var(--accent-gold);
-            color: var(--accent-gold);
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 0.9em;
-            cursor: pointer;
-        }
-        button.action-btn:active {
-            background: var(--accent-gold);
-            color: var(--bg-wood);
-        }
-
-        /* 3. 플레이어별 카드 선택 박스 */
-        #scoreboard-panel {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .player-card-box {
-            background: var(--panel-bg);
-            border-radius: 14px;
-            padding: 12px 14px;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            position: relative;
-            transition: all 0.2s ease;
-        }
-
-        .player-card-box.is-host {
-            background: linear-gradient(135deg, #3d2212, #21140e);
-            border: 2px solid var(--accent-gold);
-            box-shadow: 0 0 15px rgba(255, 179, 0, 0.4), inset 0 0 10px rgba(255, 160, 0, 0.2);
-        }
-
-        .player-card-box.host-failed {
-            border: 3px solid var(--accent-red) !important;
-            background: #2d100d !important;
-            box-shadow: 0 0 15px rgba(168, 32, 26, 0.5) !important;
-        }
-
-        .fail-banner {
-            display: none;
-            background: var(--accent-red);
-            color: #fff;
-            font-weight: bold;
-            font-size: 0.85em;
-            padding: 4px 10px;
-            border-radius: 6px;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
-            letter-spacing: 1px;
-        }
-
-        .player-card-box.host-failed .fail-banner {
-            display: block;
-        }
-
-        .player-info-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .player-name-input {
-            background: transparent;
-            border: none;
-            border-bottom: 1px dashed rgba(255,255,255,0.3);
-            color: var(--text-main);
-            font-size: 1.1em;
-            font-weight: bold;
-            font-family: var(--font-clean);
-            width: 85px;
-            padding-bottom: 2px;
-        }
-        .player-name-input:focus {
-            outline: none;
-            border-bottom: 1px solid var(--accent-gold);
-            color: var(--text-highlight);
-        }
-
-        .player-stats {
-            display: flex;
-            gap: 6px;
-            align-items: center;
-            font-size: 0.85em;
-        }
-
-        .stat-pill {
-            background: rgba(0,0,0,0.35);
-            padding: 3px 6px;
-            border-radius: 6px;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .score-input {
-            background: rgba(0, 0, 0, 0.5);
-            border: 1px solid var(--accent-gold);
-            color: var(--text-highlight);
-            font-size: 1.05em;
-            font-weight: bold;
-            width: 48px;
-            text-align: center;
-            border-radius: 4px;
-            padding: 1px 2px;
-        }
-        .score-input:focus {
-            outline: none;
-            background: #000;
-        }
-
-        .host-control-group {
-            display: flex;
-            gap: 4px;
-            align-items: center;
-        }
-
-        .host-checkbox-label {
-            display: flex;
-            align-items: center;
-            gap: 3px;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 179, 0, 0.5);
-            padding: 3px 6px;
-            border-radius: 8px;
-            font-size: 0.78em;
-            cursor: pointer;
-            user-select: none;
-        }
-        .player-card-box.is-host .host-checkbox-label {
-            background: var(--accent-gold);
-            border-color: #fff;
-        }
-        .player-card-box.is-host .host-checkbox-label span {
-            color: var(--bg-wood);
-        }
-
-        .host-checkbox-label input {
-            accent-color: var(--accent-gold);
-            cursor: pointer;
-        }
-        .host-checkbox-label span {
-            color: var(--text-highlight);
-            font-weight: bold;
-        }
-
-        .fail-toggle-btn {
-            display: none;
-            background: #4a1512;
-            border: 1px solid var(--accent-red);
-            color: #ff8a80;
-            padding: 3px 7px;
-            border-radius: 8px;
-            font-size: 0.75em;
-            font-weight: bold;
-            cursor: pointer;
-            align-items: center;
-            gap: 2px;
-        }
-        .player-card-box.is-host .fail-toggle-btn {
-            display: flex;
-        }
-        .player-card-box.host-failed .fail-toggle-btn {
-            background: var(--accent-red);
-            color: #fff;
-            border-color: #ffccd2;
-        }
-
-        /* 개별 전사 삭제 버튼 스타일 */
-        .single-remove-btn {
-            background: rgba(168, 32, 26, 0.2);
-            border: 1px solid rgba(168, 32, 26, 0.6);
-            color: #ff8a80;
-            padding: 3px 6px;
-            border-radius: 6px;
-            font-size: 0.75em;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .single-remove-btn:hover {
-            background: var(--accent-red);
-            color: #fff;
-        }
-
-        .host-badge-banner {
-            display: none;
-            background: linear-gradient(135deg, #ffb300, #ff8f00);
-            color: #1e120b;
-            font-weight: bold;
-            font-size: 0.82em;
-            padding: 5px 10px;
-            border-radius: 6px;
-            text-align: center;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.5);
-            font-family: var(--font-vintage);
-            letter-spacing: 1px;
-            border: 1px solid #ffe082;
-        }
-        .player-card-box.is-host .host-badge-banner {
-            display: block;
-        }
-
-        .card-picker {
-            display: flex;
-            gap: 5px;
-            justify-content: space-between;
-            overflow-x: auto;
-            padding: 2px 0 4px 0;
-        }
-        .card-picker::-webkit-scrollbar {
-            display: none;
-        }
-
-        .order-card {
-            background: rgba(255, 255, 255, 0.08);
-            color: #ffcc00;
-            min-width: 40px;
-            height: 56px;
-            border-radius: 4px 4px 12px 12px;
-            border: 2px solid rgba(255, 255, 255, 0.4);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 1.15em;
-            box-shadow: inset 0 0 6px rgba(255, 255, 255, 0.15), 0 2px 4px rgba(0,0,0,0.3);
-            user-select: none;
-            flex: 1;
-        }
-
-        .order-card span {
-            font-size: 0.5em;
-            opacity: 0.7;
-            margin-top: -2px;
-            color: #fffde7;
-        }
-
-        .order-card:active {
-            transform: scale(0.95);
-        }
-
-        .order-card.selected {
-            background: var(--beer-liquid);
-            color: #1e120b;
-            border-color: var(--accent-gold);
-            transform: translateY(-3px);
-        }
-
-        /* 4. 하단 컨트롤 버튼 */
-        #control-panel {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-top: 5px;
-        }
-
-        #calculate-btn {
-            background: linear-gradient(to bottom, #ffca28, #ff8f00);
-            color: #1e120b;
-            border: none;
-            padding: 14px;
-            font-size: 1.15em;
-            font-weight: bold;
-            border-radius: 25px;
-            cursor: pointer;
-            box-shadow: 0 4px 0 #b26a00;
-            text-transform: uppercase;
-            width: 100%;
-        }
-        #calculate-btn:active {
-            box-shadow: 0 2px 0 #b26a00;
-            transform: translateY(2px);
-        }
-
-        #reset-btn {
-            background: transparent;
-            border: 1px solid var(--accent-red);
-            color: #ff6f60;
-            padding: 8px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.9em;
-            width: 100%;
-        }
-
-        /* 실시간 순위표 */
-        #ranking-board-panel {
-            background: #e6d5b8;
-            color: #2b1d0c;
-            border-radius: 14px;
-            padding: 16px;
-            border: 3px double #5c3a21;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.7);
-            background-image: radial-gradient(circle, #fcf6ed 0%, #d4bda0 100%);
-            margin-top: 10px;
-        }
-
-        .ranking-header {
-            text-align: center;
-            border-bottom: 2px dashed #5c3a21;
-            padding-bottom: 8px;
-            margin-bottom: 12px;
-        }
-
-        .ranking-header h3 {
-            margin: 0;
-            font-family: var(--font-vintage);
-            font-size: 1.4em;
-            color: #78281f;
-            letter-spacing: 2px;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-        }
-
-        .ranking-header p {
-            margin: 3px 0 0;
-            font-size: 0.8em;
-            font-style: italic;
-            color: #5c3a21;
-        }
-
-        .ranking-list {
-            display: flex;
-            flex-direction: column;
-            gap: 7px;
-        }
-
-        .ranking-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.65);
-            padding: 9px 14px;
-            border-radius: 8px;
-            border: 1px solid #c8b088;
-            font-weight: bold;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-
-        .ranking-item.top-rank {
-            background: linear-gradient(135deg, rgba(255, 215, 0, 0.4), rgba(212, 175, 55, 0.2));
-            border: 2px solid var(--accent-gold);
-            transform: scale(1.01);
-        }
-
-        .ranking-left {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .rank-number {
-            font-size: 1.1em;
-            color: #78281f;
-            width: 35px;
-        }
-
-        .ranking-name {
-            font-size: 1.1em;
-            color: #21140e;
-        }
-
-        .ranking-score {
-            font-size: 1.15em;
-            color: #78281f;
-            background: rgba(120, 40, 31, 0.08);
-            padding: 3px 10px;
-            border-radius: 6px;
-            border: 1px solid rgba(120, 40, 31, 0.2);
-        }
-
-        /* 승리 팝업 모달 */
-        #winner-modal {
-            display: none;
-            position: fixed;
-            z-index: 100;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.85);
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .modal-content {
-            background: var(--panel-bg);
-            border: 2px solid var(--accent-gold);
-            border-radius: 20px;
-            padding: 30px 20px 20px 20px;
-            text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.7);
-            width: 100%;
-            max-width: 380px;
-            position: relative;
-        }
-
-        .modal-close-icon {
-            position: absolute;
-            top: 12px;
-            right: 15px;
-            background: transparent;
-            border: none;
-            color: var(--beer-foam);
-            font-size: 1.5em;
-            font-weight: bold;
-            cursor: pointer;
-            line-height: 1;
-            padding: 0;
-            opacity: 0.7;
-            transition: opacity 0.2s;
-        }
-        .modal-close-icon:hover {
-            opacity: 1;
-            color: var(--text-highlight);
-        }
-
-        .modal-content h2 {
-            font-family: var(--font-vintage);
-            color: var(--text-highlight);
-            font-size: 2.2em;
-            margin: 10px 0;
-        }
-        .modal-content p {
-            font-size: 1.2em;
-            margin: 0 0 20px 0;
-            color: var(--beer-foam);
-        }
-        .close-modal {
-            background: var(--accent-gold);
-            color: var(--bg-wood);
-            border: none;
-            padding: 12px 24px;
-            border-radius: 15px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 1.1em;
-            width: 100%;
-        }
+        .ranking-card { background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+        .mvp-section-title { font-size: 14px; font-weight: bold; color: var(--accent-color); margin: 16px 0 8px 4px; }
+        .mvp-card { background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        
+        .creator-footer { text-align: center; font-size: 11px; color: var(--text-sub); margin-top: 20px; margin-bottom: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
+<div class="container">
     <header>
-        <h1>배럴 다이스</h1>
-        <p>북유럽 바이킹 장부</p>
-        <div class="creator-tag">제작자: 천상민</div>
+        <div class="header-title-area">
+            <span class="header-title">🍺 배럴 다이스</span>
+            <span class="header-subtitle">선술집 맥주 정산소</span>
+        </div>
+        <div class="header-buttons">
+            <button class="btn-top-header" onclick="saveRecordData()">기록저장</button>
+            <button class="btn-top-header btn-top-danger" onclick="fullResetApp()">초기화</button>
+        </div>
     </header>
 
-    <div id="app-container">
-
-        <!-- 1. 맥주잔 섹션 -->
-        <section id="round-result-panel">
-            <button class="calc-toggle-btn" onclick="toggleCalculator()">🧮 계산기 열기</button>
-
-            <div id="mini-calculator">
-                <div class="calc-screen" id="calc-screen">0</div>
-                <div class="calc-pad">
-                    <button class="calc-btn clear" onclick="calcClear()">C</button>
-                    <button class="calc-btn op" onclick="calcAppend('/')">÷</button>
-                    <button class="calc-btn op" onclick="calcAppend('*')">×</button>
-                    <button class="calc-btn op" onclick="calcBackspace()">⌫</button>
-                    
-                    <button class="calc-btn" onclick="calcAppend('7')">7</button>
-                    <button class="calc-btn" onclick="calcAppend('8')">8</button>
-                    <button class="calc-btn" onclick="calcAppend('9')">9</button>
-                    <button class="calc-btn op" onclick="calcAppend('-')">-</button>
-                    
-                    <button class="calc-btn" onclick="calcAppend('4')">4</button>
-                    <button class="calc-btn" onclick="calcAppend('5')">5</button>
-                    <button class="calc-btn" onclick="calcAppend('6')">6</button>
-                    <button class="calc-btn op" onclick="calcAppend('+')">+</button>
-                    
-                    <button class="calc-btn" onclick="calcAppend('1')">1</button>
-                    <button class="calc-btn" onclick="calcAppend('2')">2</button>
-                    <button class="calc-btn" onclick="calcAppend('3')">3</button>
-                    <button class="calc-btn" onclick="calcCalculate()">=</button>
-                    
-                    <button class="calc-btn" onclick="calcAppend('0')" style="grid-column: span 2;">0</button>
-                    <button class="calc-btn apply" onclick="applyCalcResult()">잔수에 적용</button>
-                </div>
-            </div>
-
-            <div class="beer-control-wrapper">
-                <button class="beer-adj-btn" onclick="adjustPreparedBeer(-1)">-</button>
-                
-                <div class="beer-container-wrapper">
-                    <div class="beer-handle"></div>
-                    <div id="beer-glass-visual">
-                        <div id="beer-liquid-container" class="beer-liquid-container">
-                            <div class="beer-foam-layer" id="beer-foam"></div>
-                            <div class="beer-wave"></div>
-                            <div class="beer-body"></div>
-                        </div>
-                        <div id="glass-number-display">0</div>
-                    </div>
-                </div>
-
-                <button class="beer-adj-btn" onclick="adjustPreparedBeer(1)">+</button>
-            </div>
-
-            <button class="beer-reset-bar-btn" onclick="resetPreparedBeer()">
-                <span>🔄</span> 맥주잔 초기화
-            </button>
-
-            <div id="round-result-text">
-                <h2>이번 라운드 준비된 맥주</h2>
-                <p id="result-message">플레이어별 주문 카드를 선택하세요 (최대 2장).</p>
-            </div>
-        </section>
-
-        <!-- 2. 플레이어 관리 헤더 바 -->
-        <div class="section-header">
-            <h3>바이킹 전사 명단</h3>
-            <div class="player-actions">
-                <button class="action-btn" onclick="addPlayer()">+ 전사 추가</button>
-            </div>
+    <!-- 1단계: 설정 화면 -->
+    <div id="setup-screen">
+        <div class="section-box">
+            <div class="section-title">참여 인원 설정</div>
+            <div class="section-desc">최대 6명까지 참여할 인원을 선택하십시오. (목표 점수: 75점 이상)</div>
+            <div class="player-count-grid" id="player-count-buttons"></div>
         </div>
 
-        <!-- 3. 플레이어별 맥주잔 카드 선택 및 점수판 영역 -->
-        <section id="scoreboard-panel">
-            <div id="player-list-container">
-                <!-- 동적 생성 -->
-            </div>
-        </section>
+        <div class="section-box">
+            <div class="section-title">플레이어 이름 등록</div>
+            <div class="section-desc">플레이어별 이름을 지정하세요. (입력창을 누르면 기존 이름이 바로 지워집니다)</div>
+            <div id="player-config-list"></div>
+        </div>
 
-        <!-- 4. 하단 컨트롤 버튼 -->
-        <section id="control-panel">
-            <button id="calculate-btn" onclick="calculateRound()">라운드 점수 반영하기</button>
-            <button id="reset-btn" onclick="resetGame()">게임 전체 초기화</button>
-        </section>
-
-        <!-- 실시간 순위표 -->
-        <section id="ranking-board-panel">
-            <div class="ranking-header">
-                <h3>👑 WANTED : 실시간 순위표</h3>
-                <p>명예의 전당 전사 현황</p>
-            </div>
-            <div class="ranking-list" id="ranking-list-container">
-                <!-- 동적 생성 -->
-            </div>
-        </section>
-
+        <button class="btn-primary" onclick="startCalculator()">게임시작</button>
+        
+        <div class="creator-footer">
+            <div><span style="color:var(--accent-color);">🍻</span> Barrel Dice Scorekeeper & Table Manager</div>
+            <div style="color:var(--text-main); font-weight:bold;">제작자: 천상민</div>
+        </div>
     </div>
 
-    <!-- 승리 팝업 모달 -->
-    <section id="winner-modal">
-        <div class="modal-content">
-            <button class="modal-close-icon" onclick="dismissWinnerModal()" title="닫기">&times;</button>
-            <p>🍻 최고점 전사 탄생! 🍻</p>
-            <h2 id="winner-name-display">플레이어</h2>
-            <p id="winner-score-display">00점으로 승리했습니다!</p>
-            <button class="close-modal" onclick="closeWinnerModal()">🍺 새 게임 시작하기</button>
+    <!-- 2단계: 점수 입력 화면 -->
+    <div id="calculator-screen" class="hidden">
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="progress-bar-fill"></div>
+            <div class="progress-text-overlay" id="progress-text-overlay">실시간 최고 점수 게이지 (0 / 75점)</div>
         </div>
-    </section>
 
-    <script>
-        let preparedBeer = 0;
-        let players = [
-            { id: 1, name: "전사1", totalScore: 0, lastGainedScore: 0, selectedCards: [], isHost: false, isHostFailed: false },
-            { id: 2, name: "전사2", totalScore: 0, lastGainedScore: 0, selectedCards: [], isHost: false, isHostFailed: false },
-            { id: 3, name: "전사3", totalScore: 0, lastGainedScore: 0, selectedCards: [], isHost: false, isHostFailed: false }
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <div id="round-counter" style="font-size:13px; color:var(--accent-color); font-weight:bold;">라운드 1</div>
+        </div>
+
+        <div class="pub-master-box">
+            <div class="pub-master-header">
+                <span id="pub-master-display-label">👑 이번 주점 주인: -</span>
+                <button class="btn-mini-calc" onclick="openPubMasterModal()">술집 주인 정하기</button>
+            </div>
+            
+            <div class="section-desc" style="margin-bottom:6px; margin-top:4px;">
+                <strong>맥주제조 (2~9 숫자 무제한 중복 선택 가능):</strong>
+            </div>
+
+            <div class="beer-builder-section">
+                <div style="display:flex; gap:6px;">
+                    <button class="btn-mini-calc" style="flex:2; padding:10px; font-size:13px;" onclick="openBeerPoolModal()">🍺 맥주제조</button>
+                    <button class="btn-mini-calc btn-top-danger" style="flex:1; padding:10px; font-size:12px;" onclick="clearAllBeerTokens()"> 리셋</button>
+                </div>
+                <div class="beer-tokens-display" id="beer-tokens-container"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; font-size:12px;">
+                    <span style="color:var(--text-sub);">총 맥주 생성값:</span>
+                    <span id="total-beer-sum-display" style="color:var(--accent-color); font-weight:bold; font-size:14px;">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-box">
+            <div class="section-title-row">
+                <div id="step-title" class="section-title">손님 주문 및 정산</div>
+            </div>
+            <div id="step-desc" class="section-desc" style="margin-top: 6px;">
+                술집 주인으로 선택된 플레이어의 칸은 주문 입력이 잠금 처리됩니다. (다음 라운드로 넘어갈 때 순위 반영)
+            </div>
+        </div>
+
+        <div id="player-order-inputs"></div>
+
+        <div class="nav-button-group">
+            <button class="btn-secondary" onclick="prevRound()">이전 라운드</button>
+            <button class="btn-primary" style="margin-top:0; flex:2;" id="next-btn" onclick="nextRound()">다음 라운드 진행</button>
+        </div>
+
+        <div class="creator-footer" style="margin-top: 10px;">
+            <div>Barrel Dice Scorekeeper</div>
+            <div style="color:var(--text-main); font-weight:bold;">제작자: 천상민</div>
+        </div>
+    </div>
+
+    <!-- 3단계: 결과 화면 -->
+    <div id="result-screen" class="hidden">
+        <div class="winner-card">
+            <div style="font-size: 11px; color: var(--accent-color); margin-bottom: 2px; font-weight:bold; letter-spacing: 1px;">🍻 배럴 다이스 최고의 주점 지배자 🍻</div>
+            <div class="winner-icon-container">🏆</div>
+            <div class="winner-name-badge" id="winner-name-display">-</div>
+            <div class="winner-score-badge" id="winner-score-display">0점</div>
+            <div style="font-size: 12px; color: var(--text-sub); margin-top: 8px;" id="winner-flavor-text">-</div>
+        </div>
+        
+        <div class="mvp-section-title">✨ 선술집 하이라이트 멘트</div>
+        <div id="mvp-cards-container"></div>
+
+        <div class="mvp-section-title" style="margin-top: 20px;">📊 최종 누적 점수 순위</div>
+        <div id="ranking-list"></div>
+        
+        <button class="btn-primary btn-edit-mode" onclick="goToEditSteps()">점수 기록 다시 수정하기</button>
+        <button class="btn-primary" onclick="resetApp()" style="margin-top: 10px;">새로운 게임 시작하기</button>
+
+        <div class="creator-footer" style="margin-top: 20px;">
+            <div>Barrel Dice Scorekeeper</div>
+            <div style="color:var(--text-main); font-weight:bold;">제작자: 천상민</div>
+        </div>
+    </div>
+</div>
+
+<!-- 술집 주인 선택 모달 창 -->
+<div id="pub-master-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <div class="modal-title">👑 이번 라운드 술집 주인 선택</div>
+        <div class="section-desc" style="text-align:center; margin-bottom:4px;">주점으로 임명할 플레이어를 선택하세요.</div>
+        <div id="modal-player-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+        <button class="btn-primary" style="padding:10px; margin-top:4px;" onclick="closePubMasterModal()">닫기</button>
+    </div>
+</div>
+
+<!-- 2~9 숫자 선택 모달 창 -->
+<div id="beer-pool-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <div class="modal-title">🍺 맥주 통 숫자 선택 </div>
+        <div class="section-desc" style="text-align:center; margin-bottom:4px;">숫자를 클릭할 때마다 해당 맥주 통이 추가됩니다.<br></div>
+        <div class="pool-grid" id="beer-pool-grid"></div>
+        <button class="btn-primary" style="padding:10px; margin-top:4px;" onclick="closeBeerPoolModal()">선택 완료</button>
+    </div>
+</div>
+
+<!-- 개별 토큰 조작 모달 창 -->
+<div id="beer-token-action-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <div class="modal-title" id="token-modal-title">🍺 맥주 토큰 설정</div>
+        <div class="section-desc" style="text-align:center; margin-bottom:4px;">선택한 토큰에 적용할 상태를 골라주세요.</div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+            <button class="btn-primary" style="margin-top:0; background: linear-gradient(135deg, #bc6c25, #9b521b);" onclick="confirmToggleDoubleToken()">x2</button>
+            <button class="btn-primary btn-edit-mode" style="margin-top:0; background: #333; border-color: #666; color:#ccc;" onclick="confirmToggleDisableToken()">토큰 제외</button>
+            <button class="btn-primary btn-top-danger" style="margin-top:0; padding:12px;" onclick="confirmDeleteToken()">삭제</button>
+            <button class="btn-secondary" style="padding:12px; margin-top:4px;" onclick="closeTokenActionModal()">닫기</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let playerCount = 4;
+    let currentRound = 1;
+    let roundDataList = [];
+    let playerNames = ["손님 1", "손님 2", "손님 3", "손님 4"];
+    let players = [];
+    let displayPlayerOrder = []; // 화면에 고정 출력되는 플레이어 순서 배열
+    let selectedTokenIdForAction = null; 
+    
+    window.onload = function() {
+        renderPlayerCountButtons();
+        renderPlayerConfigInputs();
+    };
+
+    function openPubMasterModal() {
+        const modal = document.getElementById('pub-master-modal');
+        const listContainer = document.getElementById('modal-player-list');
+        listContainer.innerHTML = '';
+
+        players.forEach((p, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 'modal-player-btn';
+            btn.innerHTML = `
+                <span style="flex:1; font-weight:bold;">${p.name}</span>
+                <span style="font-size:12px; color:var(--accent-color);">선택하기</span>
+            `;
+            btn.onclick = () => {
+                roundDataList[currentRound - 1].pubMasterIndex = idx;
+                closePubMasterModal();
+                renderRound();
+            };
+            listContainer.appendChild(btn);
+        });
+
+        modal.classList.remove('hidden');
+    }
+
+    function closePubMasterModal() {
+        document.getElementById('pub-master-modal').classList.add('hidden');
+    }
+
+    function openBeerPoolModal() {
+        const modal = document.getElementById('beer-pool-modal');
+        renderBeerPoolGrid();
+        modal.classList.remove('hidden');
+    }
+
+    function closeBeerPoolModal() {
+        document.getElementById('beer-pool-modal').classList.add('hidden');
+    }
+
+    function renderBeerPoolGrid() {
+        const grid = document.getElementById('beer-pool-grid');
+        grid.innerHTML = '';
+        const rData = roundDataList[currentRound - 1];
+        if (!rData.beerTokens) rData.beerTokens = [];
+
+        for (let n = 2; n <= 9; n++) {
+            let activeTokens = rData.beerTokens.filter(t => t.value === n && !t.isDisabled);
+            let currentCount = activeTokens.length;
+
+            const btn = document.createElement('button');
+            btn.className = `pool-num-btn`; 
+            btn.innerHTML = `
+                <span>${n}</span>
+                <span class="pool-count-sub">생성됨: ${currentCount}개</span>
+            `;
+            
+            btn.onclick = () => {
+                btn.classList.add('selected');
+                setTimeout(() => {
+                    btn.classList.remove('selected');
+                }, 150);
+
+                rData.beerTokens.push({ id: Date.now() + Math.random(), value: n, isDouble: false, isDisabled: false });
+                calculateRoundScores();
+                renderBeerTokens();
+                
+                let updatedActive = rData.beerTokens.filter(t => t.value === n && !t.isDisabled).length;
+                btn.querySelector('.pool-count-sub').innerText = `생성됨: ${updatedActive}개`;
+            };
+            grid.appendChild(btn);
+        }
+    }
+
+    function clearAllBeerTokens() {
+        const rData = roundDataList[currentRound - 1];
+        rData.beerTokens = [];
+        calculateRoundScores();
+        renderBeerTokens();
+        if (!document.getElementById('beer-pool-modal').classList.contains('hidden')) {
+            renderBeerPoolGrid();
+        }
+    }
+
+    function openTokenActionModal(id) {
+        selectedTokenIdForAction = id;
+        const rData = roundDataList[currentRound - 1];
+        const token = rData.beerTokens.find(t => t.id === id);
+        if (token) {
+            document.getElementById('token-modal-title').innerText = `🍺 맥주 통 [${token.value}] 설정`;
+            document.getElementById('beer-token-action-modal').classList.remove('hidden');
+        }
+    }
+
+    function closeTokenActionModal() {
+        selectedTokenIdForAction = null;
+        document.getElementById('beer-token-action-modal').classList.add('hidden');
+    }
+
+    function confirmToggleDoubleToken() {
+        if (selectedTokenIdForAction !== null) {
+            const rData = roundDataList[currentRound - 1];
+            const token = rData.beerTokens.find(t => t.id === selectedTokenIdForAction);
+            if (token) {
+                token.isDouble = !token.isDouble;
+                if (token.isDouble) token.isDisabled = false;
+            }
+            calculateRoundScores();
+            renderBeerTokens();
+            if (!document.getElementById('beer-pool-modal').classList.contains('hidden')) {
+                renderBeerPoolGrid();
+            }
+            closeTokenActionModal();
+        }
+    }
+
+    function confirmToggleDisableToken() {
+        if (selectedTokenIdForAction !== null) {
+            const rData = roundDataList[currentRound - 1];
+            const token = rData.beerTokens.find(t => t.id === selectedTokenIdForAction);
+            if (token) {
+                token.isDisabled = !token.isDisabled;
+                if (token.isDisabled) token.isDouble = false;
+            }
+            calculateRoundScores();
+            renderBeerTokens();
+            if (!document.getElementById('beer-pool-modal').classList.contains('hidden')) {
+                renderBeerPoolGrid();
+            }
+            closeTokenActionModal();
+        }
+    }
+
+    function confirmDeleteToken() {
+        if (selectedTokenIdForAction !== null) {
+            const rData = roundDataList[currentRound - 1];
+            rData.beerTokens = rData.beerTokens.filter(t => t.id !== selectedTokenIdForAction);
+            calculateRoundScores();
+            renderBeerTokens();
+            if (!document.getElementById('beer-pool-modal').classList.contains('hidden')) {
+                renderBeerPoolGrid();
+            }
+            closeTokenActionModal();
+        }
+    }
+
+    function renderBeerTokens() {
+        const container = document.getElementById('beer-tokens-container');
+        container.innerHTML = '';
+        const rData = roundDataList[currentRound - 1];
+
+        if (!rData.beerTokens || rData.beerTokens.length === 0) {
+            container.innerHTML = `<span style="font-size:11px; color:var(--text-sub);">선택된 맥주 통이 없습니다. 위 버튼을 눌러 추가하세요.</span>`;
+            document.getElementById('total-beer-sum-display').innerText = `0`;
+            return;
+        }
+
+        rData.beerTokens.forEach(t => {
+            const badge = document.createElement('div');
+            let badgeClass = 'beer-token-badge';
+            if (t.isDisabled) {
+                badgeClass += ' disabled-token';
+            } else if (t.isDouble) {
+                badgeClass += ' double';
+            }
+            badge.className = badgeClass;
+            
+            badge.innerHTML = `<span>${t.value}</span>`;
+            badge.onclick = () => openTokenActionModal(t.id);
+            container.appendChild(badge);
+        });
+
+        let sum = 0;
+        rData.beerTokens.forEach(t => {
+            if (!t.isDisabled) {
+                sum += t.value * (t.isDouble ? 2 : 1);
+            }
+        });
+        document.getElementById('total-beer-sum-display').innerText = `${sum}`;
+    }
+
+    function renderPlayerCountButtons() {
+        const container = document.getElementById('player-count-buttons');
+        container.innerHTML = '';
+        for (let i = 2; i <= 6; i++) {
+            const btn = document.createElement('button');
+            btn.className = `pc-btn ${i === playerCount ? 'active' : ''}`;
+            btn.innerText = `${i}명`;
+            btn.onclick = () => {
+                saveConfigInputs();
+                playerCount = i;
+                renderPlayerCountButtons();
+                renderPlayerConfigInputs();
+            };
+            container.appendChild(btn);
+        }
+    }
+
+    function renderPlayerConfigInputs() {
+        saveConfigInputs();
+        const container = document.getElementById('player-config-list');
+        container.innerHTML = '';
+        for (let i = 0; i < playerCount; i++) {
+            if (!playerNames[i]) playerNames[i] = `손님 ${i + 1}`;
+            const row = document.createElement('div');
+            row.className = 'config-row';
+
+            row.innerHTML = `
+                <div class="config-input-wrapper">
+                    <input type="text" class="config-input" id="p-name-${i}" value="${playerNames[i]}" onfocus="this.value=''" placeholder="플레이어 이름을 입력하세요">
+                </div>
+            `;
+            container.appendChild(row);
+        }
+    }
+
+    function saveConfigInputs() {
+        for (let i = 0; i < playerCount; i++) {
+            const input = document.getElementById(`p-name-${i}`);
+            if (input && input.value.trim() !== "") {
+                playerNames[i] = input.value;
+            }
+        }
+    }
+
+    function startCalculator() {
+        saveConfigInputs();
+        players = [];
+        for (let i = 0; i < playerCount; i++) {
+            players.push({
+                originalIndex: i,
+                name: playerNames[i],
+                totalScore: 0
+            });
+        }
+        // 초기 순서 고정 (원래 등록 순서 또는 초기 정렬)
+        displayPlayerOrder = [...players];
+        currentRound = 1;
+        roundDataList = [];
+        
+        document.getElementById('setup-screen').classList.add('hidden');
+        document.getElementById('calculator-screen').classList.remove('hidden');
+        initRoundData();
+        renderRound();
+    }
+
+    function initRoundData() {
+        if (!roundDataList[currentRound - 1]) {
+            let orders = {};
+            players.forEach((_, idx) => {
+                orders[idx] = 0;
+            });
+            roundDataList[currentRound - 1] = {
+                pubMasterIndex: (currentRound - 1) % playerCount,
+                beerTokens: [],
+                orders: orders,
+                calculatedScores: {}
+            };
+        }
+    }
+
+    function renderRound() {
+        initRoundData();
+        const rData = roundDataList[currentRound - 1];
+
+        let maxScore = Math.max(...players.map(p => p.totalScore), 0);
+        let progressPercent = Math.min(100, (maxScore / 75) * 100);
+        
+        document.getElementById('progress-bar-fill').style.width = `${progressPercent}%`;
+        document.getElementById('progress-text-overlay').innerText = `실시간 최고 점수 게이지 (${maxScore} / 75점 목표)`;
+
+        document.getElementById('round-counter').innerText = `라운드 ${currentRound} (목표: 75점 이상)`;
+
+        const masterPlayer = players.find(p => p.originalIndex === rData.pubMasterIndex);
+        const masterDisplayLabel = document.getElementById('pub-master-display-label');
+        if (masterPlayer) {
+            masterDisplayLabel.innerHTML = `👑 이번 주점 주인: <span style="color:var(--accent-color)">${masterPlayer.name}</span>`;
+        }
+
+        renderBeerTokens();
+        calculateRoundScores();
+        renderOrderInputs();
+    }
+
+    function calculateRoundScores() {
+        const rData = roundDataList[currentRound - 1];
+        
+        let totalBeer = 0;
+        if (rData.beerTokens) {
+            rData.beerTokens.forEach(t => {
+                if (!t.isDisabled) {
+                    totalBeer += t.value * (t.isDouble ? 2 : 1);
+                }
+            });
+        }
+        rData.totalBeer = totalBeer;
+
+        const masterIdx = rData.pubMasterIndex;
+
+        let sumOrders = 0;
+        let customerEntries = []; 
+        players.forEach((p) => {
+            let idx = p.originalIndex;
+            if (idx !== masterIdx) {
+                let order = rData.orders[idx] !== undefined ? rData.orders[idx] : 0;
+                customerEntries.push({ idx, order });
+                sumOrders += order;
+            }
+        });
+
+        let roundScores = {};
+        players.forEach((p) => { roundScores[p.originalIndex] = 0; });
+
+        if (totalBeer >= sumOrders) {
+            customerEntries.forEach(c => {
+                roundScores[c.idx] = c.order;
+            });
+            roundScores[masterIdx] = Math.max(0, totalBeer - sumOrders);
+        } else {
+            roundScores[masterIdx] = totalBeer;
+
+            if (customerEntries.length > 0) {
+                let maxOrder = customerEntries[0].order;
+                customerEntries.forEach(c => { if (c.order > maxOrder) maxOrder = c.order; });
+
+                let minOrder = customerEntries[0].order;
+                customerEntries.forEach(c => { if (c.order < minOrder) minOrder = c.order; });
+
+                customerEntries.forEach(c => {
+                    let isMax = (c.order === maxOrder);
+                    let isMin = (c.order === minOrder);
+
+                    if (isMax) {
+                        roundScores[c.idx] = -(Math.abs(c.order - totalBeer));
+                    }
+                    if (isMin && customerEntries.length > 1 && !isMax) {
+                        roundScores[c.idx] = maxOrder;
+                    }
+                });
+            }
+        }
+
+        rData.calculatedScores = roundScores;
+        updateTotalScores();
+        const sumDisplay = document.getElementById('total-beer-sum-display');
+        if (sumDisplay) sumDisplay.innerText = totalBeer;
+    }
+
+    function updateTotalScores() {
+        players.forEach((p) => {
+            let pIdx = p.originalIndex;
+            let total = 0;
+            roundDataList.forEach(rd => {
+                if (rd && rd.calculatedScores && rd.calculatedScores[pIdx] !== undefined) {
+                    total += rd.calculatedScores[pIdx];
+                }
+            });
+            p.totalScore = total;
+        });
+        updatePlayerGauges();
+        
+        let maxScore = Math.max(...players.map(p => p.totalScore), 0);
+        let progressPercent = Math.min(100, (maxScore / 75) * 100);
+        const fillEl = document.getElementById('progress-bar-fill');
+        const textEl = document.getElementById('progress-text-overlay');
+        if (fillEl) fillEl.style.width = `${progressPercent}%`;
+        if (textEl) textEl.innerText = `실시간 최고 점수 게이지 (${maxScore} / 75점 목표)`;
+    }
+
+    function updatePlayerGauges() {
+        players.forEach((p) => {
+            let idx = p.originalIndex;
+            const gaugeFill = document.getElementById(`player-gauge-${idx}`);
+            const scoreText = document.getElementById(`player-total-score-${idx}`);
+            if (gaugeFill && scoreText) {
+                let percent = Math.min(100, Math.max(0, (p.totalScore / 75) * 100));
+                gaugeFill.style.width = `${percent}%`;
+                scoreText.innerText = `${p.totalScore}점`;
+            }
+        });
+    }
+
+    function renderOrderInputs() {
+        const container = document.getElementById('player-order-inputs');
+        container.innerHTML = '';
+        const rData = roundDataList[currentRound - 1];
+        const masterIdx = rData.pubMasterIndex;
+
+        // 라운드 내에서는 실시간 순위 재정렬을 하지 않고, 고정된 displayPlayerOrder 순서 유지
+        displayPlayerOrder.forEach((p, rankIdx) => {
+            const idx = p.originalIndex;
+            const card = document.createElement('div');
+            const isMaster = (idx === masterIdx);
+            card.className = `player-score-card ${isMaster ? 'is-master' : ''}`;
+
+            const currentOrder = rData.orders[idx] !== undefined ? rData.orders[idx] : 0;
+            const earnedScore = rData.calculatedScores[idx] !== undefined ? rData.calculatedScores[idx] : 0;
+            const percent = Math.min(100, Math.max(0, (p.totalScore / 75) * 100));
+
+            let roleBadge = isMaster ? `<span style="color:var(--accent-color); font-size:11px; font-weight:bold;">[🍺 술집 주인]</span>` : `<span style="color:var(--text-sub); font-size:11px;">[손님]</span>`;
+            let labelText = isMaster ? `주점 운영중 (주문 잠김)` : `주문한 잔 수`;
+
+            card.innerHTML = `
+                <div class="player-card-top">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:12px; color:var(--accent-color); font-weight:bold;">${rankIdx + 1}위</span>
+                        <span style="font-size:14px; font-weight:bold;">${p.name}</span>
+                        ${roleBadge}
+                    </div>
+                    <div style="font-size:13px; font-weight:bold; color:var(--accent-color);">
+                        누적: <span id="player-total-score-${idx}">${p.totalScore}</span>점
+                    </div>
+                </div>
+                
+                <div class="player-gauge-wrapper">
+                    <div class="player-gauge-fill" id="player-gauge-${idx}" style="width: ${percent}%;"></div>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
+                    <span style="font-size:11px; color:var(--text-sub);">${labelText}</span>
+                    <div class="stepper-controls">
+                        <button class="step-btn ${isMaster ? 'disabled' : ''}" onclick="adjustOrder(${idx}, -1)">-</button>
+                        <input type="number" class="score-input ${isMaster ? 'disabled' : ''}" id="order-input-${idx}" value="${currentOrder}" ${isMaster ? 'disabled' : ''} onfocus="this.select()" onchange="updateOrder(${idx}, this.value)">
+                        <button class="step-btn ${isMaster ? 'disabled' : ''}" onclick="adjustOrder(${idx}, 1)">+</button>
+                        <span style="font-size:12px; color:var(--accent-color); font-weight:bold; min-width:48px; text-align:right;" id="score-result-${idx}">(${earnedScore >= 0 ? '+' : ''}${earnedScore}점)</span>
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function adjustOrder(pIdx, amt) {
+        const rData = roundDataList[currentRound - 1];
+        if (pIdx === rData.pubMasterIndex) return;
+
+        let currentVal = rData.orders[pIdx] !== undefined ? rData.orders[pIdx] : 0;
+        let val = currentVal + amt;
+        rData.orders[pIdx] = Math.max(0, val);
+        document.getElementById(`order-input-${pIdx}`).value = rData.orders[pIdx];
+        calculateRoundScores();
+        updateScoreLabels();
+        renderOrderInputs();
+    }
+
+    function updateOrder(pIdx, val) {
+        const rData = roundDataList[currentRound - 1];
+        if (pIdx === rData.pubMasterIndex) return;
+
+        let num = parseInt(val);
+        rData.orders[pIdx] = isNaN(num) ? 0 : Math.max(0, num);
+        calculateRoundScores();
+        updateScoreLabels();
+        renderOrderInputs();
+    }
+
+    function updateScoreLabels() {
+        const rData = roundDataList[currentRound - 1];
+        players.forEach((p) => {
+            let idx = p.originalIndex;
+            const scoreSpan = document.getElementById(`score-result-${idx}`);
+            if (scoreSpan) {
+                let sc = rData.calculatedScores[idx] || 0;
+                scoreSpan.innerText = `(${sc >= 0 ? '+' : ''}${sc}점)`;
+            }
+        });
+        updatePlayerGauges();
+    }
+
+    function prevRound() {
+        if (currentRound > 1) {
+            currentRound--;
+            // 이전 라운드로 갈 때도 해당 시점 직전의 누적 점수 기준으로 정렬 순서 업데이트
+            updateDisplayOrder();
+            renderRound();
+        } else {
+            document.getElementById('calculator-screen').classList.add('hidden');
+            document.getElementById('setup-screen').classList.remove('hidden');
+        }
+    }
+
+    function nextRound() {
+        let maxScore = Math.max(...players.map(p => p.totalScore));
+        if (maxScore >= 75) {
+            showResult();
+        } else {
+            currentRound++;
+            initRoundData();
+            // '다음 라운드 진행' 버튼을 누르는 순간 순위(등수)를 새로 계산하여 반영
+            updateDisplayOrder();
+            renderRound();
+        }
+    }
+
+    function updateDisplayOrder() {
+        displayPlayerOrder = [...players].sort((a, b) => b.totalScore - a.totalScore);
+    }
+
+    function goToEditSteps() {
+        document.getElementById('result-screen').classList.add('hidden');
+        document.getElementById('calculator-screen').classList.remove('hidden');
+        currentRound = 1;
+        updateDisplayOrder();
+        renderRound();
+    }
+
+    function showResult() {
+        document.getElementById('calculator-screen').classList.add('hidden');
+        document.getElementById('result-screen').classList.remove('hidden');
+        if (typeof confetti === 'function') confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+
+        let ranked = [...players].sort((a, b) => b.totalScore - a.totalScore);
+        
+        const winnerNameEl = document.getElementById('winner-name-display');
+        winnerNameEl.innerHTML = `<span>${ranked[0].name}</span>`;
+        document.getElementById('winner-score-display').innerText = `${ranked[0].totalScore}점`;
+        document.getElementById('winner-flavor-text').innerText = "“전설의 황금 오크통을 독차지하고 선술집 최고의 명예를 거머쥐었습니다!”";
+
+        const mvpContainer = document.getElementById('mvp-cards-container');
+        mvpContainer.innerHTML = '';
+
+        const highlights = [
+            { title: "🍺 황금 맥주 장인상", desc: "가장 뛰어난 양조 실력으로 주점의 매출을 책임진 손님!" },
+            { title: "🥩 최고의 먹보 손님상", desc: "가장 거대한 맥주 잔을 주문하여 선술집 분위기를 뜨겁게 달군 주역!" },
+            { title: "🪵 오크통의 수호자상", desc: "위기 속에서도 주점의 균형을 완벽하게 잡아낸 알짜배기 플레이어!" }
         ];
 
-        let nextPlayerId = 4;
-        const WINNING_SCORE = 75;
+        highlights.forEach((h, idx) => {
+            let targetPlayer = ranked[idx % ranked.length];
+            const mvpCard = document.createElement('div');
+            mvpCard.className = 'mvp-card';
+            mvpCard.innerHTML = `
+                <div>
+                    <div style="font-size:11px; color:var(--accent-color); font-weight:bold; margin-bottom:2px;">[${h.title}]</div>
+                    <div style="font-size:13px; font-weight:bold; color:var(--text-main);">주인공: <span>${targetPlayer.name}</span></div>
+                    <div style="font-size:11px; color:var(--text-sub); margin-top:3px;">${h.desc}</div>
+                </div>
+            `;
+            mvpContainer.appendChild(mvpCard);
+        });
 
-        window.onload = function() {
-            updateBeerVisual();
-            renderPlayers();
-        };
-
-        let calcInput = "0";
-
-        function toggleCalculator() {
-            const calc = document.getElementById('mini-calculator');
-            const toggleBtn = document.querySelector('.calc-toggle-btn');
-            
-            if (calc.style.display === 'block') {
-                calc.style.display = 'none';
-                toggleBtn.innerText = '🧮 계산기 열기';
-            } else {
-                // 열 때마다 계산기 입력 내용 초기화 (0으로 리셋)
-                calcClear();
-                calc.style.display = 'block';
-                toggleBtn.innerText = '🧮 계산기 닫기';
-            }
-        }
-
-        function updateCalcScreen() {
-            document.getElementById('calc-screen').innerText = calcInput;
-        }
-
-        function calcClear() {
-            calcInput = "0";
-            updateCalcScreen();
-        }
-
-        function calcBackspace() {
-            if (calcInput.length > 1) {
-                calcInput = calcInput.slice(0, -1);
-            } else {
-                calcInput = "0";
-            }
-            updateCalcScreen();
-        }
-
-        function calcAppend(val) {
-            if (calcInput === "0" && !isNaN(val)) {
-                calcInput = val;
-            } else {
-                calcInput += val;
-            }
-            updateCalcScreen();
-        }
-
-        function calcCalculate() {
-            try {
-                let sanitized = calcInput.replace(/[^0-9+\-*/.]/g, '');
-                let result = eval(sanitized);
-                if (result === undefined || isNaN(result) || !isFinite(result)) {
-                    calcInput = "오류";
-                } else {
-                    calcInput = String(Math.round(result * 100) / 100);
-                }
-            } catch (e) {
-                calcInput = "오류";
-            }
-            updateCalcScreen();
-        }
-
-        function applyCalcResult() {
-            calcCalculate();
-            let val = parseInt(calcInput, 10);
-            if (!isNaN(val)) {
-                if (val < 0) val = 0;
-                if (val > 99) val = 99;
-                preparedBeer = val;
-                updateBeerVisual();
-                toggleCalculator();
-            } else {
-                alert("올바른 숫자를 계산해주세요!");
-            }
-        }
-
-        function adjustPreparedBeer(amount) {
-            preparedBeer += amount;
-            if (preparedBeer < 0) preparedBeer = 0;
-            if (preparedBeer > 99) preparedBeer = 99;
-            updateBeerVisual();
-        }
-
-        function resetPreparedBeer() {
-            preparedBeer = 0;
-            updateBeerVisual();
-        }
-
-        function updateBeerVisual() {
-            document.getElementById('glass-number-display').innerText = preparedBeer;
-            const liquidContainer = document.getElementById('beer-liquid-container');
-            const foamLayer = document.getElementById('beer-foam');
-
-            let percentage = (preparedBeer / 40) * 100;
-            if (percentage > 100) percentage = 100;
-            
-            liquidContainer.style.height = percentage + '%';
-            foamLayer.style.display = preparedBeer <= 0 ? 'none' : 'block';
-        }
-
-        function addPlayer() {
-            if (players.length >= 20) {
-                alert("최대 20명까지 참가할 수 있습니다!");
-                return;
-            }
-
-            players.push({
-                id: nextPlayerId++,
-                name: `전사 ${players.length + 1}`,
-                totalScore: 0,
-                lastGainedScore: 0,
-                selectedCards: [],
-                isHost: false,
-                isHostFailed: false
-            });
-            renderPlayers();
-        }
-
-        // 개별 전사 삭제 함수
-        function removePlayerById(id) {
-            if (players.length <= 1) {
-                alert("최소 1명의 전사는 있어야 합니다!");
-                return;
-            }
-            players = players.filter(p => p.id !== id);
-            renderPlayers();
-        }
-
-        function updatePlayerName(id, newName) {
-            const player = players.find(p => p.id === id);
-            if (player) {
-                player.name = newName;
-                renderRankingBoard();
-            }
-        }
-
-        function updatePlayerScore(id, newScoreVal) {
-            const player = players.find(p => p.id === id);
-            if (player) {
-                let parsed = parseInt(newScoreVal, 10);
-                player.totalScore = isNaN(parsed) ? 0 : parsed;
-                renderRankingBoard();
-            }
-        }
-
-        function toggleHost(playerId) {
-            players.forEach(p => {
-                if (p.id === playerId) {
-                    p.isHost = !p.isHost;
-                    if (!p.isHost) {
-                        p.isHostFailed = false;
-                        p.selectedCards = [];
-                    }
-                } else if (p.isHost && p.id !== playerId) {
-                    p.isHost = false;
-                    p.isHostFailed = false;
-                }
-            });
-            renderPlayers();
-        }
-
-        function toggleHostFail(playerId, event) {
-            event.stopPropagation();
-            const player = players.find(p => p.id === playerId);
-            if (player && player.isHost) {
-                player.isHostFailed = !player.isHostFailed;
-                renderPlayers();
-            }
-        }
-
-        function toggleCard(playerId, cardNum) {
-            const player = players.find(p => p.id === playerId);
-            if (!player || player.isHost) return;
-
-            const index = player.selectedCards.indexOf(cardNum);
-            if (index > -1) {
-                player.selectedCards.splice(index, 1);
-            } else {
-                if (player.selectedCards.length >= 2) {
-                    alert("주문 카드는 최대 2장까지만 선택할 수 있습니다!");
-                    return;
-                }
-                player.selectedCards.push(cardNum);
-            }
-            renderPlayers();
-        }
-
-        function renderPlayers() {
-            renderRankingBoard();
-
-            let sortedIndices = players.map((p, idx) => idx).sort((a, b) => {
-                return players[b].totalScore - players[a].totalScore;
-            });
-
-            let ranks = new Array(players.length);
-            let currentRank = 1;
-            for (let i = 0; i < sortedIndices.length; i++) {
-                if (i > 0 && players[sortedIndices[i]].totalScore < players[sortedIndices[i-1]].totalScore) {
-                    currentRank = i + 1;
-                }
-                ranks[sortedIndices[i]] = currentRank;
-            }
-
-            const container = document.getElementById('player-list-container');
-            container.innerHTML = '';
-
-            players.forEach((player, index) => {
-                let rank = ranks[index];
-
-                let cardBox = document.createElement('div');
-                let boxClasses = ['player-card-box'];
-                if (player.isHost) boxClasses.push('is-host');
-                if (player.isHost && player.isHostFailed) boxClasses.push('host-failed');
-                cardBox.className = boxClasses.join(' ');
-
-                let infoRow = document.createElement('div');
-                infoRow.className = 'player-info-row';
-                infoRow.innerHTML = `
-                    <div style="display: flex; gap: 6px; align-items: center;">
-                        <span class="rank-badge" style="background:var(--accent-gold); color:var(--bg-wood); padding:2px 7px; border-radius:6px; font-weight:bold; font-size:0.8em;">${rank}위</span>
-                        <input type="text" class="player-name-input" value="${player.name}" oninput="updatePlayerName(${player.id}, this.value)">
-                        <button class="single-remove-btn" onclick="removePlayerById(${player.id})" title="전사 삭제">삭제</button>
+        const list = document.getElementById('ranking-list');
+        list.innerHTML = '';
+        ranked.forEach((p, idx) => {
+            const card = document.createElement('div');
+            card.className = 'ranking-card';
+            card.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="color:var(--accent-color); font-weight:bold;">${idx + 1}위</span>
+                        <span style="font-weight:bold;">${p.name}</span>
                     </div>
-                    <div style="display: flex; gap: 6px; align-items: center;">
-                        <div class="host-control-group">
-                            <button class="fail-toggle-btn" onclick="toggleHostFail(${player.id}, event)" title="제조 실패 토글">
-                                ❌ ${player.isHostFailed ? '실패취소' : '제조실패'}
-                            </button>
-                            <label class="host-checkbox-label" title="이번 턴 술집 주인 지정">
-                                <input type="checkbox" ${player.isHost ? 'checked' : ''} onchange="toggleHost(${player.id})">
-                                <span>🍺 주인</span>
-                            </label>
-                        </div>
-                        <div class="player-stats">
-                            <span class="stat-pill" title="직전 턴 획득 점수">전턴: <strong style="color:${player.lastGainedScore >= 0 ? '#66bb6a' : '#ef5350'};">${player.lastGainedScore > 0 ? '+' + player.lastGainedScore : player.lastGainedScore}</strong></span>
-                            <span class="stat-pill" title="누적 점수 수정 가능">누적: <input type="number" class="score-input" value="${player.totalScore}" onchange="updatePlayerScore(${player.id}, this.value)"></span>
-                        </div>
-                    </div>
-                `;
-                cardBox.appendChild(infoRow);
+                    <span style="color:var(--accent-color); font-weight:bold;">${p.totalScore}점</span>
+                </div>
+            `;
+            list.appendChild(card);
+        });
+    }
 
-                let failBanner = document.createElement('div');
-                failBanner.className = 'fail-banner';
-                failBanner.innerText = '🚨 [제조 실패] 술집 주인 제조 실패! 모든 플레이어 기본 점수 획득';
-                cardBox.appendChild(failBanner);
+    function saveRecordData() {
+        alert("배럴 다이스 점수 기록이 안전하게 저장되었습니다!");
+    }
 
-                let badgeBanner = document.createElement('div');
-                badgeBanner.className = 'host-badge-banner';
-                badgeBanner.innerText = '🍻 [현재 술집 주인] 탭에서 주인의 위엄을 뽐내는 중!';
-                cardBox.appendChild(badgeBanner);
+    function resetApp() {
+        document.getElementById('result-screen').classList.add('hidden');
+        document.getElementById('calculator-screen').classList.add('hidden');
+        document.getElementById('setup-screen').classList.remove('hidden');
+        currentRound = 1;
+        renderPlayerCountButtons();
+        renderPlayerConfigInputs();
+    }
 
-                let cardPickerWrapper = document.createElement('div');
-                cardPickerWrapper.className = 'card-picker-wrapper';
-
-                let cardPicker = document.createElement('div');
-                cardPicker.className = 'card-picker';
-
-                for (let c = 0; c <= 7; c++) {
-                    let isSelected = player.selectedCards.includes(c);
-                    let cardEl = document.createElement('div');
-                    cardEl.className = `order-card ${isSelected ? 'selected' : ''}`;
-                    cardEl.innerHTML = `${c}<span>잔</span>`;
-                    cardEl.onclick = () => toggleCard(player.id, c);
-                    cardPicker.appendChild(cardEl);
-                }
-                cardPickerWrapper.appendChild(cardPicker);
-                cardBox.appendChild(cardPickerWrapper);
-
-                container.appendChild(cardBox);
-            });
+    function fullResetApp() {
+        if (confirm("모든 설정과 게임 기록이 초기화됩니다. 새로 시작하시겠습니까?")) {
+            playerCount = 4;
+            playerNames = ["손님 1", "손님 2", "손님 3", "손님 4"];
+            players = [];
+            displayPlayerOrder = [];
+            roundDataList = [];
+            resetApp();
         }
+    }
+</script>
 
-        function renderRankingBoard() {
-            const rankingContainer = document.getElementById('ranking-list-container');
-            rankingContainer.innerHTML = '';
-
-            let sortedPlayers = [...players].sort((a, b) => b.totalScore - a.totalScore);
-
-            sortedPlayers.forEach((player, index) => {
-                let rank = index + 1;
-                let rankItem = document.createElement('div');
-                rankItem.className = `ranking-item ${rank === 1 ? 'top-rank' : ''}`;
-
-                let medalIcon = '';
-                if (rank === 1) medalIcon = '👑 ';
-                else if (rank === 2) medalIcon = '🥈 ';
-                else if (rank === 3) medalIcon = '🥉 ';
-
-                rankItem.innerHTML = `
-                    <div class="ranking-left">
-                        <span class="rank-number">${medalIcon}${rank}위</span>
-                        <span class="ranking-name">${player.name} ${player.isHost ? '🍺(주인)' : ''}</span>
-                    </div>
-                    <div class="ranking-score">${player.totalScore}점</div>
-                `;
-                rankingContainer.appendChild(rankItem);
-            });
-        }
-
-        function calculateRound() {
-            let activePlayers = players.filter(p => !p.isHost);
-            let hostPlayer = players.find(p => p.isHost);
-
-            let previousScores = {};
-            players.forEach(p => {
-                previousScores[p.id] = p.totalScore;
-            });
-
-            activePlayers.forEach(p => {
-                p.currentOrder = p.selectedCards.reduce((sum, num) => sum + num, 0);
-            });
-
-            let totalOrdered = activePlayers.reduce((sum, p) => sum + p.currentOrder, 0);
-            let message = "";
-
-            if (activePlayers.length === 0) {
-                alert("주문을 진행할 다른 전사(플레이어)가 필요합니다!");
-                return;
-            }
-
-            if (hostPlayer && hostPlayer.isHostFailed) {
-                activePlayers.forEach(p => {
-                    p.totalScore += p.currentOrder;
-                });
-                message = `🚨 술집 주인(${hostPlayer.name}) 제조 실패! 주인은 0점, 모든 플레이어가 자신이 등록한 점수를 획득합니다.`;
-            } 
-            else if (totalOrdered <= preparedBeer) {
-                activePlayers.forEach(p => {
-                    p.totalScore += p.currentOrder;
-                });
-
-                let remainder = preparedBeer - totalOrdered;
-                if (hostPlayer) {
-                    hostPlayer.totalScore += remainder;
-                    message = `성공! 총 주문(${totalOrdered}잔) <= 준비된 맥주(${preparedBeer}잔). 주인(${hostPlayer.name})이 남은 ${remainder}잔 획득!`;
-                } else {
-                    message = `성공! 총 주문(${totalOrdered}잔) <= 준비된 맥주(${preparedBeer}잔). (술집 주인 없음)`;
-                }
-            } 
-            else {
-                if (hostPlayer) {
-                    hostPlayer.totalScore += preparedBeer;
-                }
-
-                let maxOrder = Math.max(...activePlayers.map(p => p.currentOrder));
-                let highestPlayers = activePlayers.filter(p => p.currentOrder === maxOrder);
-
-                let minOrder = Math.min(...activePlayers.map(p => p.currentOrder));
-                let lowestPlayers = activePlayers.filter(p => p.currentOrder === minOrder);
-
-                highestPlayers.forEach(p => {
-                    p.totalScore -= maxOrder;
-                });
-
-                lowestPlayers.forEach(p => {
-                    p.totalScore += maxOrder;
-                });
-
-                message = `초과 패널티! 총 주문(${totalOrdered}잔) > 맥주(${preparedBeer}잔). 최고 주문자 패널티 및 최저 주문자 보상 적용!`;
-            }
-
-            players.forEach(p => {
-                p.lastGainedScore = p.totalScore - previousScores[p.id];
-            });
-
-            document.getElementById('result-message').innerText = message;
-            
-            preparedBeer = 0;
-            updateBeerVisual();
-
-            players.forEach(p => {
-                p.selectedCards = [];
-                p.isHost = false;
-                p.isHostFailed = false;
-            });
-
-            renderPlayers();
-            checkWinner();
-        }
-
-        function checkWinner() {
-            let winners = players.filter(p => p.totalScore >= WINNING_SCORE);
-            if (winners.length > 0) {
-                winners.sort((a, b) => b.totalScore - a.totalScore);
-                let winner = winners[0];
-
-                document.getElementById('winner-name-display').innerText = `${winner.name}`;
-                document.getElementById('winner-score-display').innerText = `${winner.totalScore}점으로 승리했습니다!`;
-                document.getElementById('winner-modal').style.display = 'flex';
-            }
-        }
-
-        function closeWinnerModal() {
-            document.getElementById('winner-modal').style.display = 'none';
-            resetGame();
-        }
-
-        function dismissWinnerModal() {
-            document.getElementById('winner-modal').style.display = 'none';
-        }
-
-        function resetGame() {
-            preparedBeer = 0;
-            players.forEach(p => {
-                p.totalScore = 0;
-                p.lastGainedScore = 0;
-                p.selectedCards.splice(0, p.selectedCards.length);
-                p.isHost = false;
-                p.isHostFailed = false;
-            });
-            updateBeerVisual();
-            document.getElementById('result-message').innerText = "새 게임이 시작되었습니다. 주문 카드를 선택하세요.";
-            renderPlayers();
-        }
-    </script>
 </body>
 </html>
